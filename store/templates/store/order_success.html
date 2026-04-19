@@ -1,0 +1,12 @@
+{% extends "store/base.html" %}
+
+{% block title %}Order Success - Super Store{% endblock %}
+
+{% block content %}
+<div class="success-container">
+    <div class="success-icon">✓</div>
+    <h2>Order Placed Successfully!</h2>
+    <p>Thank you for shopping with us. Your order has been processed.</p>
+    <a href="{% url 'home' %}" class="btn-primary" style="margin-top: 2rem; display: inline-block;">Continue Shopping</a>
+</div>
+{% endblock %}

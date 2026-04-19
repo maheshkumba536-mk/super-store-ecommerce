@@ -1,0 +1,30 @@
+{% extends "store/base.html" %}
+
+{% block title %}Home - Super Store{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1>Welcome to Super Store</h1>
+    <p>Discover our exclusive collection of high-quality products.</p>
+</div>
+
+<div class="product-grid">
+    {% for product in products %}
+    <div class="product-card">
+        {% if product.image %}
+        <div class="product-image" style="background-image: url('{{ product.image.url }}');"></div>
+        {% else %}
+        <div class="product-image placeholder">No Image</div>
+        {% endif %}
+        
+        <div class="product-info">
+            <h3 class="product-title">{{ product.name }}</h3>
+            <p class="product-price">${{ product.price }}</p>
+            <a href="{% url 'product_detail' product.pk %}" class="btn-secondary">View Details</a>
+        </div>
+    </div>
+    {% empty %}
+    <p>No products available right now. Please check back later!</p>
+    {% endfor %}
+</div>
+{% endblock %}
