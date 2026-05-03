@@ -3,18 +3,205 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Product, Cart, CartItem, Order, OrderItem
-from django.db import transaction
+from django.http import JsonResponse
+from django.db.models import Q
+from django.utils import timezone
+from .models import Product, Category, Wishlist, WishlistItem
 
-# Create your views here.
 
 def home(request):
-    products = Product.objects.all().order_by('-created_at')
-    return render(request, 'store/home.html', {'products': products})
+    """Homepage with featured products, categories, and product grid."""
+    products = Product.active.all().order_by('-is_featured', '-created_at')
+    categories = Category.objects.all()
+    featured = Product.active.filter(is_featured=True)[:6]
+
+    # Category filter
+    category_slug = request.GET.get('category')
+    if category_slug:
+        products = products.filter(category__slug=category_slug)
+
+    # Store filter
+    store = request.GET.get('store')
+    if store:
+        products = products.filter(store_name=store)
+
+    context = {
+        'products': products,
+        'categories': categories,
+        'featured': featured,
+        'active_category': category_slug,
+        'active_store': store,
+        'stores': Product.STORE_CHOICES,
+    }
+    return render(request, 'store/home.html', context)
+
 
 def product_detail(request, pk):
+    """Product detail page with sharing options."""
     product = get_object_or_404(Product, pk=pk)
-    return render(request, 'store/product_detail.html', {'product': product})
+
+    # Check if expired
+    if not product.is_active:
+        messages.warning(request, "This deal has expired.")
+        return redirect('home')
+
+    # Related products (same category, excluding current)
+    related = Product.active.filter(
+        category=product.category
+    ).exclude(pk=pk)[:4] if product.category else Product.active.exclude(pk=pk)[:4]
+
+    # Check if in user's wishlist
+    in_wishlist = False
+    if request.user.is_authenticated:
+        wishlist = Wishlist.objects.filter(user=request.user).first()
+        if wishlist:
+            in_wishlist = WishlistItem.objects.filter(
+                wishlist=wishlist, product=product
+            ).exists()
+
+    # Build full URL for sharing
+    full_url = request.build_absolute_uri()
+
+    context = {
+        'product': product,
+        'related': related,
+        'in_wishlist': in_wishlist,
+        'full_url': full_url,
+    }
+    return render(request, 'store/product_detail.html', context)
+
+
+def search_products(request):
+    """Search products via AJAX or regular request."""
+    query = request.GET.get('q', '').strip()
+    products = Product.active.all()
+
+    if query:
+        products = products.filter(
+            Q(name__icontains=query) |
+            Q(description__icontains=query) |
+            Q(tags__icontains=query)
+        )
+
+    store = request.GET.get('store')
+    if store:
+        products = products.filter(store_name=store)
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # AJAX response
+        data = [{
+            'id': p.pk,
+            'name': p.name,
+            'price': str(p.price),
+            'original_price': str(p.original_price) if p.original_price else None,
+            'discount_percent': p.discount_percent,
+            'image': p.image.url if p.image else None,
+            'store_name': p.store_display,
+            'store_color': p.store_color,
+            'rating': str(p.rating),
+            'days_remaining': p.days_remaining,
+            'is_expiring_soon': p.is_expiring_soon,
+            'product_link': p.product_link or '#',
+        } for p in products[:20]]
+        return JsonResponse({'products': data})
+
+    categories = Category.objects.all()
+    context = {
+        'products': products,
+        'query': query,
+        'categories': categories,
+        'active_store': store,
+        'stores': Product.STORE_CHOICES,
+    }
+    return render(request, 'store/home.html', context)
+
+
+def category_view(request, slug):
+    """Products filtered by category."""
+    category = get_object_or_404(Category, slug=slug)
+    products = Product.active.filter(category=category)
+    categories = Category.objects.all()
+
+    store = request.GET.get('store')
+    if store:
+        products = products.filter(store_name=store)
+
+    context = {
+        'products': products,
+        'categories': categories,
+        'active_category': slug,
+        'current_category': category,
+        'active_store': store,
+        'stores': Product.STORE_CHOICES,
+    }
+    return render(request, 'store/home.html', context)
+
+
+def track_click(request, pk):
+    """Track affiliate link click and redirect to external store."""
+    product = get_object_or_404(Product, pk=pk)
+    product.click_count += 1
+    product.save(update_fields=['click_count'])
+
+    if product.product_link:
+        return redirect(product.product_link)
+    return redirect('product_detail', pk=pk)
+
+
+@login_required(login_url='login')
+def wishlist_view(request):
+    """View user's wishlist."""
+    wishlist, created = Wishlist.objects.get_or_create(user=request.user)
+    items = wishlist.items.select_related('product').all()
+
+    # Filter out expired products from wishlist display
+    active_items = [item for item in items if item.product.is_active]
+
+    context = {
+        'items': active_items,
+        'wishlist': wishlist,
+    }
+    return render(request, 'store/wishlist.html', context)
+
+
+@login_required(login_url='login')
+def toggle_wishlist(request, pk):
+    """Add/remove product from wishlist (AJAX)."""
+    product = get_object_or_404(Product, pk=pk)
+    wishlist, created = Wishlist.objects.get_or_create(user=request.user)
+
+    item = WishlistItem.objects.filter(wishlist=wishlist, product=product).first()
+
+    if item:
+        item.delete()
+        added = False
+        message = f"{product.name} removed from wishlist."
+    else:
+        WishlistItem.objects.create(wishlist=wishlist, product=product)
+        added = True
+        message = f"{product.name} added to wishlist!"
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'added': added,
+            'message': message,
+            'count': wishlist.items.count(),
+        })
+
+    messages.success(request, message)
+    return redirect(request.META.get('HTTP_REFERER', 'home'))
+
+
+def pinterest_feed(request):
+    """Pinterest-optimized product feed for bulk pinning."""
+    products = Product.active.all().order_by('-created_at')[:50]
+    context = {
+        'products': products,
+    }
+    return render(request, 'store/pinterest_feed.html', context)
+
+
+# ---- Auth Views ----
 
 def register_user(request):
     if request.user.is_authenticated:
@@ -23,13 +210,14 @@ def register_user(request):
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            Cart.objects.create(user=user) # Create a cart for new user
+            Wishlist.objects.create(user=user)  # Create wishlist for new user
             login(request, user)
-            messages.success(request, "Registration successful.")
+            messages.success(request, "Welcome! Your account has been created. 🎉")
             return redirect('home')
     else:
         form = UserCreationForm()
     return render(request, 'store/register.html', {'form': form})
+
 
 def login_user(request):
     if request.user.is_authenticated:
@@ -42,9 +230,8 @@ def login_user(request):
             user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
-                # Ensure user has a cart
-                Cart.objects.get_or_create(user=user)
-                messages.info(request, f"You are now logged in as {username}.")
+                Wishlist.objects.get_or_create(user=user)
+                messages.info(request, f"Welcome back, {username}! 👋")
                 return redirect('home')
             else:
                 messages.error(request, "Invalid username or password.")
@@ -54,81 +241,8 @@ def login_user(request):
         form = AuthenticationForm()
     return render(request, 'store/login.html', {'form': form})
 
+
 def logout_user(request):
     logout(request)
     messages.info(request, "You have successfully logged out.")
     return redirect('home')
-
-@login_required(login_url='login')
-def cart_view(request):
-    cart, created = Cart.objects.get_or_create(user=request.user)
-    items = cart.items.all()
-    total = sum(item.total_price for item in items)
-    return render(request, 'store/cart.html', {'items': items, 'total': total, 'cart': cart})
-
-@login_required(login_url='login')
-def add_to_cart(request, pk):
-    product = get_object_or_404(Product, pk=pk)
-    cart, created = Cart.objects.get_or_create(user=request.user)
-    cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
-    
-    if not created:
-        cart_item.quantity += 1
-        cart_item.save()
-    
-    messages.success(request, f"{product.name} added to your cart.")
-    return redirect('cart_view')
-
-@login_required(login_url='login')
-def update_cart(request, pk):
-    if request.method == 'POST':
-        cart_item = get_object_or_404(CartItem, pk=pk, cart__user=request.user)
-        try:
-            quantity = int(request.POST.get('quantity', 1))
-            if quantity > 0:
-                cart_item.quantity = quantity
-                cart_item.save()
-            else:
-                cart_item.delete()
-        except ValueError:
-            pass
-    return redirect('cart_view')
-
-@login_required(login_url='login')
-def remove_from_cart(request, pk):
-    cart_item = get_object_or_404(CartItem, pk=pk, cart__user=request.user)
-    cart_item.delete()
-    messages.info(request, "Item removed from cart.")
-    return redirect('cart_view')
-
-@login_required(login_url='login')
-@transaction.atomic
-def checkout(request):
-    cart = get_object_or_404(Cart, user=request.user)
-    items = cart.items.all()
-    
-    if not items.exists():
-        messages.warning(request, "Your cart is empty.")
-        return redirect('cart_view')
-        
-    if request.method == 'POST':
-        total = sum(item.total_price for item in items)
-        order = Order.objects.create(user=request.user, total_price=total, is_completed=True)
-        
-        for item in items:
-            OrderItem.objects.create(
-                order=order,
-                product=item.product,
-                quantity=item.quantity,
-                price_at_purchase=item.product.price
-            )
-            
-        items.delete() # Clear cart
-        return redirect('order_success')
-        
-    total = sum(item.total_price for item in items)
-    return render(request, 'store/checkout.html', {'items': items, 'total': total})
-
-@login_required(login_url='login')
-def order_success(request):
-    return render(request, 'store/order_success.html')

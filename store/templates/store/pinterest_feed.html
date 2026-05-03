@@ -1,0 +1,54 @@
+{% extends "store/base.html" %}
+{% load humanize %}
+
+{% block title %}Pinterest Feed — Super Store Deals{% endblock %}
+
+{% block content %}
+<div class="pinterest-feed-container">
+    <div class="page-header" style="text-align:center; margin-bottom:30px;">
+        <h1>📌 Pinterest-Ready Deals</h1>
+        <p class="page-subtitle">Click any deal to pin it to your Pinterest board!</p>
+    </div>
+    
+    <div class="pinterest-grid">
+        {% for product in products %}
+        <div class="pinterest-card">
+            <a href="{% url 'product_detail' product.pk %}" class="pin-image-link">
+                {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="pin-image" loading="lazy">
+                {% else %}
+                <div class="pin-image placeholder-img">🛍️</div>
+                {% endif %}
+            </a>
+            
+            <div class="pin-info">
+                <h3 class="pin-title">{{ product.name }}</h3>
+                <div class="pin-price-row">
+                    <span class="pin-price">₹{{ product.price|intcomma }}</span>
+                    {% if product.discount_percent > 0 %}
+                    <span class="pin-discount">{{ product.discount_percent }}% OFF</span>
+                    {% endif %}
+                </div>
+                <span class="pin-store" style="background: {{ product.store_color }}">{{ product.store_display }}</span>
+                
+                <div class="pin-actions">
+                    <a href="https://pinterest.com/pin/create/button/?url={{ request.build_absolute_uri|urlencode }}&media={% if product.image %}{{ request.scheme }}://{{ request.get_host }}{{ product.image.url }}{% endif %}&description={{ product.name|urlencode }}%20-%20₹{{ product.price }}%20{% if product.discount_percent > 0 %}({{ product.discount_percent }}%25%20OFF){% endif %}" 
+                       target="_blank" rel="noopener" class="btn-pin-large">
+                        📌 Pin to Pinterest
+                    </a>
+                    <a href="{% url 'track_click' product.pk %}" target="_blank" rel="noopener" class="btn-buy-sm">
+                        🛒 Buy
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <span class="empty-icon">📌</span>
+            <h3>No deals to pin yet</h3>
+            <p>Check back soon for new deals!</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

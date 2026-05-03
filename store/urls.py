@@ -4,13 +4,17 @@ from . import views
 urlpatterns = [
     path('', views.home, name='home'),
     path('product/<int:pk>/', views.product_detail, name='product_detail'),
-    path('cart/', views.cart_view, name='cart_view'),
-    path('cart/add/<int:pk>/', views.add_to_cart, name='add_to_cart'),
-    path('cart/remove/<int:pk>/', views.remove_from_cart, name='remove_from_cart'),
-    path('cart/update/<int:pk>/', views.update_cart, name='update_cart'),
-    path('checkout/', views.checkout, name='checkout'),
-    path('order-success/', views.order_success, name='order_success'),
-    
+    path('search/', views.search_products, name='search'),
+    path('category/<slug:slug>/', views.category_view, name='category'),
+    path('go/<int:pk>/', views.track_click, name='track_click'),
+
+    # Wishlist
+    path('wishlist/', views.wishlist_view, name='wishlist'),
+    path('wishlist/toggle/<int:pk>/', views.toggle_wishlist, name='toggle_wishlist'),
+
+    # Pinterest
+    path('pinterest-feed/', views.pinterest_feed, name='pinterest_feed'),
+
     # Auth
     path('login/', views.login_user, name='login'),
     path('logout/', views.logout_user, name='logout'),

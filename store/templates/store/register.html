@@ -1,26 +1,43 @@
 {% extends "store/base.html" %}
 
-{% block title %}Register - Super Store{% endblock %}
+{% block title %}Register — Super Store{% endblock %}
 
 {% block content %}
 <div class="auth-container">
     <div class="auth-box">
-        <h2>Create an Account</h2>
-        <p>Join Super Store today.</p>
-        <form method="post" class="auth-form">
+        <div class="auth-header">
+            <span class="auth-icon">🎉</span>
+            <h2>Create Account</h2>
+            <p>Join to save your favorite deals</p>
+        </div>
+        
+        <form method="post" action="{% url 'register' %}">
             {% csrf_token %}
+            
             {% for field in form %}
             <div class="form-group">
-                {{ field.label_tag }}
-                {{ field }}
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                <input type="{{ field.field.widget.input_type }}" 
+                       name="{{ field.name }}" 
+                       id="{{ field.id_for_label }}"
+                       placeholder="{{ field.label }}"
+                       class="form-input"
+                       {% if field.value %}value="{{ field.value }}"{% endif %}>
+                {% if field.help_text %}
+                <span class="help-text">{{ field.help_text }}</span>
+                {% endif %}
                 {% if field.errors %}
                 <span class="error-text">{{ field.errors.0 }}</span>
                 {% endif %}
             </div>
             {% endfor %}
-            <button type="submit" class="btn-primary block-btn">Register</button>
+            
+            <button type="submit" class="btn-primary block-btn">Create Account</button>
         </form>
-        <p class="auth-redirect">Already have an account? <a href="{% url 'login' %}">Login here</a></p>
+        
+        <div class="auth-footer">
+            <p>Already have an account? <a href="{% url 'login' %}">Login here</a></p>
+        </div>
     </div>
 </div>
 {% endblock %}

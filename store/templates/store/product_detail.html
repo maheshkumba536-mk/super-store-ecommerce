@@ -1,31 +1,205 @@
 {% extends "store/base.html" %}
+{% load humanize %}
 
-{% block title %}{{ product.name }} - Super Store{% endblock %}
+{% block title %}{{ product.name }} — ₹{{ product.price|intcomma }} | Super Store{% endblock %}
+
+{% block meta_description %}{{ product.description|truncatewords:25 }} Buy now from {{ product.store_display }} at ₹{{ product.price|intcomma }}{% if product.discount_percent > 0 %} ({{ product.discount_percent }}% OFF){% endif %}.{% endblock %}
+
+{% block og_tags %}
+<meta property="og:type" content="product">
+<meta property="og:title" content="{{ product.name }} — ₹{{ product.price|intcomma }}{% if product.discount_percent > 0 %} ({{ product.discount_percent }}% OFF){% endif %}">
+<meta property="og:description" content="{{ product.description|truncatewords:25 }}">
+{% if product.image %}
+<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.image.url }}">
+{% endif %}
+<meta property="og:url" content="{{ full_url }}">
+<meta property="og:site_name" content="Super Store">
+<meta property="product:price:amount" content="{{ product.price }}">
+<meta property="product:price:currency" content="INR">
+{% if product.original_price %}
+<meta property="product:original_price:amount" content="{{ product.original_price }}">
+<meta property="product:original_price:currency" content="INR">
+{% endif %}
+{% endblock %}
 
 {% block content %}
-<div class="product-detail-container">
-    <div class="product-detail-image">
-        {% if product.image %}
-        <img src="{{ product.image.url }}" alt="{{ product.name }}">
-        {% else %}
-        <div class="placeholder-large">No Image Available</div>
+<div class="detail-container">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+        <a href="{% url 'home' %}">Home</a>
+        <span class="breadcrumb-sep">›</span>
+        {% if product.category %}
+        <a href="{% url 'category' product.category.slug %}">{{ product.category.name }}</a>
+        <span class="breadcrumb-sep">›</span>
         {% endif %}
-    </div>
-    <div class="product-detail-info">
-        <h1>{{ product.name }}</h1>
-        <p class="price-large">${{ product.price }}</p>
-        <div class="description">
-            <p>{{ product.description }}</p>
+        <span class="breadcrumb-current">{{ product.name|truncatewords:5 }}</span>
+    </nav>
+
+    <div class="detail-grid">
+        <!-- Image Section -->
+        <div class="detail-image-section">
+            <div class="detail-image-wrapper">
+                {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="detail-image" id="detailImage">
+                {% else %}
+                <div class="detail-image placeholder-img">🛍️ No Image</div>
+                {% endif %}
+                
+                <!-- Badges overlay -->
+                <div class="detail-badges">
+                    {% if product.discount_percent > 0 %}
+                    <span class="badge-discount badge-lg">{{ product.discount_percent }}% OFF</span>
+                    {% endif %}
+                    {% if product.is_expiring_soon %}
+                    <span class="badge-expiring badge-lg">⏰ {{ product.days_remaining }} days left</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Share Buttons -->
+            <div class="share-section">
+                <span class="share-label">Share this deal:</span>
+                <div class="share-buttons">
+                    <a href="https://pinterest.com/pin/create/button/?url={{ full_url|urlencode }}&media={% if product.image %}{{ request.scheme }}://{{ request.get_host }}{{ product.image.url }}{% endif %}&description={{ product.name|urlencode }}%20-%20₹{{ product.price }}%20{% if product.discount_percent > 0 %}{{ product.discount_percent }}%25%20OFF{% endif %}" 
+                       target="_blank" rel="noopener" class="share-btn share-pinterest" title="Pin to Pinterest">
+                        📌 Pin It
+                    </a>
+                    <a href="https://api.whatsapp.com/send?text=Check%20out%20this%20deal:%20{{ product.name|urlencode }}%20-%20₹{{ product.price }}%20{{ full_url|urlencode }}" 
+                       target="_blank" rel="noopener" class="share-btn share-whatsapp" title="Share on WhatsApp">
+                        💬 WhatsApp
+                    </a>
+                    <a href="https://twitter.com/intent/tweet?text=Amazing%20deal!%20{{ product.name|urlencode }}%20-%20₹{{ product.price }}%20{% if product.discount_percent > 0 %}({{ product.discount_percent }}%25%20OFF)%20{% endif %}&url={{ full_url|urlencode }}" 
+                       target="_blank" rel="noopener" class="share-btn share-twitter" title="Share on Twitter">
+                        🐦 Tweet
+                    </a>
+                    <button class="share-btn share-copy" onclick="copyLink()" title="Copy Link">
+                        🔗 Copy Link
+                    </button>
+                </div>
+            </div>
         </div>
         
-        {% if user.is_authenticated %}
-        <form action="{% url 'add_to_cart' product.pk %}" method="post">
-            {% csrf_token %}
-            <button type="submit" class="btn-primary btn-large">Add to Cart</button>
-        </form>
-        {% else %}
-        <a href="{% url 'login' %}?next={{ request.path }}" class="btn-primary btn-large">Login to Buy</a>
-        {% endif %}
+        <!-- Info Section -->
+        <div class="detail-info-section">
+            <!-- Store badge -->
+            <span class="detail-store-badge" style="background: {{ product.store_color }}">
+                {{ product.store_display }}
+            </span>
+            
+            <h1 class="detail-title">{{ product.name }}</h1>
+            
+            <!-- Rating -->
+            {% if product.rating > 0 %}
+            <div class="detail-rating">
+                <span class="stars-lg">{% for i in "12345" %}{% if forloop.counter <= product.rating %}⭐{% else %}☆{% endif %}{% endfor %}</span>
+                <span class="rating-text">{{ product.rating }} / 5</span>
+            </div>
+            {% endif %}
+            
+            <!-- Price Block -->
+            <div class="detail-price-block">
+                <span class="detail-sale-price">₹{{ product.price|intcomma }}</span>
+                {% if product.original_price %}
+                <span class="detail-original-price">₹{{ product.original_price|intcomma }}</span>
+                <span class="detail-discount-badge">{{ product.discount_percent }}% OFF</span>
+                {% endif %}
+            </div>
+            {% if product.original_price %}
+            <p class="savings-text">You save ₹{{ product.original_price|add:"-"|add:product.price|intcomma }} on this deal!</p>
+            {% endif %}
+            
+            <!-- Description -->
+            {% if product.description %}
+            <div class="detail-description">
+                <h3>About this deal</h3>
+                <p>{{ product.description }}</p>
+            </div>
+            {% endif %}
+            
+            <!-- Tags -->
+            {% if product.tags %}
+            <div class="detail-tags">
+                {% for tag in product.tags.split %}
+                <span class="tag-chip">{{ tag }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <!-- Expiry Info -->
+            <div class="detail-expiry">
+                {% if product.is_expiring_soon %}
+                <span class="expiry-warning">⏰ This deal expires in {{ product.days_remaining }} day{{ product.days_remaining|pluralize }}!</span>
+                {% else %}
+                <span class="expiry-normal">📅 Deal valid for {{ product.days_remaining }} more day{{ product.days_remaining|pluralize }}</span>
+                {% endif %}
+            </div>
+            
+            <!-- CTA Buttons -->
+            <div class="detail-actions">
+                {% if product.product_link %}
+                <a href="{% url 'track_click' product.pk %}" target="_blank" rel="noopener noreferrer" class="btn-buy-large">
+                    BUY NOW >>
+                </a>
+                {% endif %}
+                
+                {% if user.is_authenticated %}
+                <button class="btn-wishlist-large {% if in_wishlist %}wishlisted{% endif %}"
+                        data-product-id="{{ product.pk }}"
+                        data-url="{% url 'toggle_wishlist' product.pk %}">
+                    {% if in_wishlist %}❤️ In Wishlist{% else %}🤍 Add to Wishlist{% endif %}
+                </button>
+                {% else %}
+                <a href="{% url 'login' %}?next={{ request.path }}" class="btn-wishlist-large">
+                    🤍 Login to Save
+                </a>
+                {% endif %}
+            </div>
+            
+            <!-- Affiliate Disclosure -->
+            <div class="detail-disclosure">
+                <p>📋 <strong>Affiliate Link:</strong> We may earn a commission if you buy through this link. This doesn't affect the price you pay.</p>
+            </div>
+            
+            <!-- Click count -->
+            <div class="detail-clicks">
+                <span>👥 {{ product.click_count }} people clicked this deal</span>
+            </div>
+        </div>
     </div>
+    
+    <!-- Related Products -->
+    {% if related %}
+    <section class="related-section">
+        <h2 class="section-title">Similar Deals</h2>
+        <div class="related-grid">
+            {% for p in related %}
+            <a href="{% url 'product_detail' p.pk %}" class="related-card">
+                {% if p.image %}
+                <img src="{{ p.image.url }}" alt="{{ p.name }}" class="related-img" loading="lazy">
+                {% else %}
+                <div class="related-img placeholder-img">🛍️</div>
+                {% endif %}
+                <div class="related-info">
+                    <h4>{{ p.name|truncatewords:5 }}</h4>
+                    <span class="related-price">₹{{ p.price|intcomma }}</span>
+                    {% if p.discount_percent > 0 %}
+                    <span class="related-discount">{{ p.discount_percent }}% OFF</span>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
 </div>
+
+<script>
+function copyLink() {
+    navigator.clipboard.writeText('{{ full_url }}').then(() => {
+        const btn = document.querySelector('.share-copy');
+        btn.textContent = '✅ Copied!';
+        setTimeout(() => btn.textContent = '🔗 Copy Link', 2000);
+    });
+}
+</script>
 {% endblock %}

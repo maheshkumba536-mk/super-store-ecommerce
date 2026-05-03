@@ -1,0 +1,73 @@
+{% extends "store/base.html" %}
+{% load humanize %}
+
+{% block title %}My Wishlist — Super Store{% endblock %}
+
+{% block content %}
+<div class="wishlist-container">
+    <div class="page-header">
+        <h1>❤️ My Wishlist</h1>
+        <p class="page-subtitle">{{ items|length }} saved deal{{ items|length|pluralize }}</p>
+    </div>
+    
+    {% if items %}
+    <div class="wishlist-grid">
+        {% for item in items %}
+        <div class="wishlist-card" data-product-id="{{ item.product.pk }}">
+            <a href="{% url 'product_detail' item.product.pk %}" class="wishlist-image-link">
+                {% if item.product.image %}
+                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="wishlist-img" loading="lazy">
+                {% else %}
+                <div class="wishlist-img placeholder-img">🛍️</div>
+                {% endif %}
+                
+                {% if item.product.discount_percent > 0 %}
+                <span class="badge-discount">{{ item.product.discount_percent }}% OFF</span>
+                {% endif %}
+            </a>
+            
+            <div class="wishlist-info">
+                <a href="{% url 'product_detail' item.product.pk %}" class="wishlist-title">
+                    {{ item.product.name }}
+                </a>
+                
+                <div class="wishlist-price-row">
+                    <span class="wishlist-price">₹{{ item.product.price|intcomma }}</span>
+                    {% if item.product.original_price %}
+                    <span class="wishlist-original">₹{{ item.product.original_price|intcomma }}</span>
+                    {% endif %}
+                </div>
+                
+                <span class="wishlist-store" style="background: {{ item.product.store_color }}">
+                    {{ item.product.store_display }}
+                </span>
+                
+                {% if item.product.is_expiring_soon %}
+                <span class="badge-expiring-sm">⏰ {{ item.product.days_remaining }}d left</span>
+                {% endif %}
+                
+                <div class="wishlist-actions">
+                    <a href="{% url 'track_click' item.product.pk %}" target="_blank" rel="noopener" class="btn-buy-sm">
+                        🛒 Buy Now
+                    </a>
+                    <button class="btn-remove-wishlist"
+                            data-product-id="{{ item.product.pk }}"
+                            data-url="{% url 'toggle_wishlist' item.product.pk %}"
+                            title="Remove from wishlist">
+                        ❌ Remove
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <span class="empty-icon">💔</span>
+        <h3>Your wishlist is empty</h3>
+        <p>Save deals you love and come back to them later!</p>
+        <a href="{% url 'home' %}" class="btn-primary">Browse Deals</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

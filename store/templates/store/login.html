@@ -1,26 +1,40 @@
 {% extends "store/base.html" %}
 
-{% block title %}Login - Super Store{% endblock %}
+{% block title %}Login — Super Store{% endblock %}
 
 {% block content %}
 <div class="auth-container">
     <div class="auth-box">
-        <h2>Welcome Back</h2>
-        <p>Login to access your cart and orders.</p>
-        <form method="post" class="auth-form">
+        <div class="auth-header">
+            <span class="auth-icon">👋</span>
+            <h2>Welcome Back</h2>
+            <p>Login to save deals to your wishlist</p>
+        </div>
+        
+        <form method="post" action="{% url 'login' %}">
             {% csrf_token %}
+            
             {% for field in form %}
             <div class="form-group">
-                {{ field.label_tag }}
-                {{ field }}
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                <input type="{{ field.field.widget.input_type }}" 
+                       name="{{ field.name }}" 
+                       id="{{ field.id_for_label }}"
+                       placeholder="{{ field.label }}"
+                       class="form-input"
+                       {% if field.value %}value="{{ field.value }}"{% endif %}>
                 {% if field.errors %}
                 <span class="error-text">{{ field.errors.0 }}</span>
                 {% endif %}
             </div>
             {% endfor %}
+            
             <button type="submit" class="btn-primary block-btn">Login</button>
         </form>
-        <p class="auth-redirect">Don't have an account? <a href="{% url 'register' %}">Register here</a></p>
+        
+        <div class="auth-footer">
+            <p>Don't have an account? <a href="{% url 'register' %}">Create one</a></p>
+        </div>
     </div>
 </div>
 {% endblock %}
