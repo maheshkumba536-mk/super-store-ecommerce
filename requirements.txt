@@ -1,2 +1,5 @@
 Django
 Pillow
+dj-database-url
+psycopg[binary]
+python-dotenv

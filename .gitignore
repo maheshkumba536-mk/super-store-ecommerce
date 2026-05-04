@@ -19,6 +19,8 @@ env/
 .vscode/
 .idea/
 .env
+.env.local
+.vercel/
 
 # Scripts
 run_updates.py
