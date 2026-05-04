@@ -48,12 +48,12 @@ class ProductAdmin(admin.ModelAdmin):
     list_display = (
         'image_preview', 'name', 'price', 'original_price',
         'discount_display', 'store_badge', 'category',
-        'click_count', 'days_left', 'is_featured', 'created_at'
+        'days_left', 'is_featured', 'created_at'
     )
     list_editable = ('price', 'original_price', 'is_featured')
     list_filter = ('store_name', 'category', 'is_featured', ExpiredFilter)
     search_fields = ('name', 'description', 'tags')
-    readonly_fields = ('click_count', 'image_preview_large', 'created_at')
+    readonly_fields = ('image_preview_large', 'created_at')
     list_per_page = 25
 
     fieldsets = (
@@ -63,8 +63,8 @@ class ProductAdmin(admin.ModelAdmin):
         ('💰 Pricing', {
             'fields': ('price', 'original_price', 'rating')
         }),
-        ('🔗 Affiliate Link', {
-            'fields': ('product_link', 'store_name', 'click_count')
+        ('Product Link', {
+            'fields': ('product_link', 'store_name')
         }),
         ('⚙️ Settings', {
             'fields': ('is_featured', 'expires_at', 'created_at')
@@ -72,6 +72,21 @@ class ProductAdmin(admin.ModelAdmin):
     )
 
     actions = ['make_featured', 'remove_featured', 'extend_expiry_30', 'delete_expired']
+
+    def has_module_permission(self, request):
+        return request.user.is_superuser
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_superuser
+
+    def has_add_permission(self, request):
+        return request.user.is_superuser
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_superuser
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_superuser
 
     def image_preview(self, obj):
         if obj.image:

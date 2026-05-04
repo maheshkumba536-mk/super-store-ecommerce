@@ -54,7 +54,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='product',
             name='click_count',
-            field=models.PositiveIntegerField(default=0, help_text='Affiliate link clicks'),
+            field=models.PositiveIntegerField(default=0, help_text='Product link clicks'),
         ),
         migrations.AddField(
             model_name='product',
@@ -99,7 +99,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='product',
             name='product_link',
-            field=models.URLField(blank=True, help_text='Affiliate link (Amazon, Flipkart, etc.)', max_length=500, null=True),
+            field=models.URLField(blank=True, help_text='Product buying link (Amazon, Flipkart, etc.)', max_length=500, null=True),
         ),
         migrations.AddField(
             model_name='product',

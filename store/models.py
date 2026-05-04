@@ -52,10 +52,10 @@ class Product(models.Model):
     image = models.ImageField(upload_to='products/', null=True, blank=True)
     product_link = models.URLField(
         max_length=500, blank=True, null=True,
-        help_text="Affiliate link (Amazon, Flipkart, etc.)"
+        help_text="Product buying link (Amazon, Flipkart, etc.)"
     )
 
-    # Affiliate & categorization
+    # Store and categorization
     category = models.ForeignKey(
         Category, on_delete=models.SET_NULL, null=True, blank=True,
         related_name='products'
@@ -75,7 +75,7 @@ class Product(models.Model):
     is_featured = models.BooleanField(default=False, help_text="Show in featured/hero section")
 
     # Analytics
-    click_count = models.PositiveIntegerField(default=0, help_text="Affiliate link clicks")
+    click_count = models.PositiveIntegerField(default=0, help_text="Product link clicks")
 
     # Auto-expiry (products auto-hide after 30 days)
     created_at = models.DateTimeField(auto_now_add=True)

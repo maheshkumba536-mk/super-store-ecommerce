@@ -137,17 +137,6 @@ def category_view(request, slug):
     return render(request, 'store/home.html', context)
 
 
-def track_click(request, pk):
-    """Track affiliate link click and redirect to external store."""
-    product = get_object_or_404(Product, pk=pk)
-    product.click_count += 1
-    product.save(update_fields=['click_count'])
-
-    if product.product_link:
-        return redirect(product.product_link)
-    return redirect('product_detail', pk=pk)
-
-
 @login_required(login_url='login')
 def wishlist_view(request):
     """View user's wishlist."""

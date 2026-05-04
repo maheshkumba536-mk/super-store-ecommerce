@@ -6,8 +6,6 @@ urlpatterns = [
     path('product/<int:pk>/', views.product_detail, name='product_detail'),
     path('search/', views.search_products, name='search'),
     path('category/<slug:slug>/', views.category_view, name='category'),
-    path('go/<int:pk>/', views.track_click, name='track_click'),
-
     # Wishlist
     path('wishlist/', views.wishlist_view, name='wishlist'),
     path('wishlist/toggle/<int:pk>/', views.toggle_wishlist, name='toggle_wishlist'),

@@ -47,8 +47,8 @@
                 {% endif %}
                 
                 <div class="wishlist-actions">
-                    <a href="{% url 'track_click' item.product.pk %}" target="_blank" rel="noopener" class="btn-buy-sm">
-                        🛒 Buy Now
+                    <a href="{% if item.product.product_link %}{{ item.product.product_link }}{% else %}{% url 'product_detail' item.product.pk %}{% endif %}" target="_blank" rel="noopener" class="btn-buy-sm">
+                        Buy Now
                     </a>
                     <button class="btn-remove-wishlist"
                             data-product-id="{{ item.product.pk }}"

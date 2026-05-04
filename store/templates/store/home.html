@@ -1,75 +1,112 @@
 {% extends "store/base.html" %}
 {% load humanize %}
 
-{% block title %}{% if current_category %}{{ current_category.name }} — {% endif %}{% if query %}Search: {{ query }} — {% endif %}Super Store - Best Deals{% endblock %}
+{% block title %}{% if current_category %}{{ current_category.name }} - {% endif %}{% if query %}Search: {{ query }} - {% endif %}Super Store - Product Deals{% endblock %}
 
 {% block content %}
-<!-- Hero Section - Panda Style -->
 {% if not active_category and not query %}
-<section class="hero-section">
+<section class="hero-section marketing-hero">
     {% with hero_product=featured|first %}
     {% if hero_product %}
     <div class="hero-content">
-        <h1 class="hero-title">{{ hero_product.name|truncatewords:4 }}</h1>
-        <p class="hero-subtitle">{{ hero_product.description|truncatewords:15 }}</p>
-        <h2 class="hero-price">₹{{ hero_product.price|intcomma }}</h2>
-        <a href="{% url 'track_click' hero_product.pk %}" target="_blank" rel="noopener noreferrer" class="btn-buy">Buy Now</a>
+        <span class="hero-kicker">{{ hero_product.store_display }} featured deal</span>
+        <h1 class="hero-title">Shop smart from products we add daily.</h1>
+        <p class="hero-subtitle">
+            Discover hand-picked offers, compare prices, and click Buy Now to open the provided store link.
+        </p>
+        <div class="hero-actions">
+            <a href="#productGrid" class="btn-buy">View Products</a>
+            {% if hero_product.product_link %}
+            <a href="{{ hero_product.product_link }}" target="_blank" rel="noopener noreferrer" class="btn-secondary">Buy Featured Product</a>
+            {% else %}
+            <a href="{% url 'product_detail' hero_product.pk %}" class="btn-secondary">View Featured Product</a>
+            {% endif %}
+        </div>
+        <div class="hero-trust-row">
+            <span>Fresh products</span>
+            <span>Direct store links</span>
+            <span>Price highlights</span>
+        </div>
     </div>
-    <div class="hero-image-wrapper">
-        {% if hero_product.image %}
-        <img src="{{ hero_product.image.url }}" alt="{{ hero_product.name }}" class="hero-image">
-        {% else %}
-        <img src="https://wasek23.github.io/panda-e-commerce/images/banner-images/headphone.png" alt="Hero Item" class="hero-image">
-        {% endif %}
-    </div>
+    <a href="{% url 'product_detail' hero_product.pk %}" class="hero-product-card">
+        <span class="badge-store" style="background: {{ hero_product.store_color }}">{{ hero_product.store_display }}</span>
+        <div class="hero-product-media">
+            {% if hero_product.image %}
+            <img src="{{ hero_product.image.url }}" alt="{{ hero_product.name }}" class="hero-image">
+            {% else %}
+            <div class="hero-image placeholder-img">Product</div>
+            {% endif %}
+        </div>
+        <div class="hero-product-info">
+            {% if hero_product.discount_percent > 0 %}
+            <span class="discount-badge">{{ hero_product.discount_percent }}% OFF</span>
+            {% endif %}
+            <h2>{{ hero_product.name|truncatewords:8 }}</h2>
+            <p>{{ hero_product.description|truncatewords:14 }}</p>
+            <strong>Rs. {{ hero_product.price|intcomma }}</strong>
+        </div>
+    </a>
     {% else %}
     <div class="hero-content">
-        <h1 class="hero-title">Welcome to Super Store</h1>
-        <p class="hero-subtitle">Discover the best daily deals from your favorite stores.</p>
-        <a href="#productGrid" class="btn-buy">Browse Deals</a>
+        <span class="hero-kicker">Product marketing store</span>
+        <h1 class="hero-title">Add products in admin. Visitors see them here first.</h1>
+        <p class="hero-subtitle">
+            Create product entries with images, price, store name, and product links. The home page turns them into a simple marketing catalogue.
+        </p>
+        <div class="hero-actions">
+            <a href="#productGrid" class="btn-buy">Browse Products</a>
+            {% if user.is_superuser %}
+            <a href="/admin/store/product/add/" class="btn-secondary">Add Product</a>
+            {% endif %}
+        </div>
     </div>
-    <div class="hero-image-wrapper">
-        <img src="https://wasek23.github.io/panda-e-commerce/images/banner-images/headphone.png" alt="Super Store" class="hero-image">
+    <div class="hero-empty-panel">
+        <span>Ready for your first product</span>
+        <p>Add a product link in admin and it will appear as a clickable deal card.</p>
     </div>
     {% endif %}
     {% endwith %}
 </section>
 
-<!-- Panda Category Cards -->
-<section class="panda-categories">
-    <div class="panda-cat-card cat-watch">
-        <h2>Watch</h2>
-        <img src="https://wasek23.github.io/panda-e-commerce/images/categories/watch.png" alt="Watch">
+<section class="marketing-steps" aria-label="How this site works">
+    <div class="step-item">
+        <span class="step-number">1</span>
+        <h2>Add product</h2>
+        <p>Upload product image, price, category, and store link from Django admin.</p>
     </div>
-    <div class="panda-cat-card cat-bag">
-        <h2>Bag</h2>
-        <img src="https://wasek23.github.io/panda-e-commerce/images/categories/bag.png" alt="Bag">
+    <div class="step-item">
+        <span class="step-number">2</span>
+        <h2>Market it</h2>
+        <p>The home page presents featured and latest products for visitors.</p>
     </div>
-    <div class="panda-cat-card cat-shoes">
-        <h2>Shoes</h2>
-        <img src="https://wasek23.github.io/panda-e-commerce/images/categories/shoes.png" alt="Shoes">
+    <div class="step-item">
+        <span class="step-number">3</span>
+        <h2>Send traffic</h2>
+        <p>Buy buttons open the product link you provided for that item.</p>
     </div>
 </section>
 {% endif %}
 
-<!-- Featured Products Carousel -->
 {% if featured %}
 <section class="featured-section">
-    <h2 class="section-title">⭐ Featured Deals</h2>
+    <div class="section-header compact">
+        <h2 class="section-title">Featured products</h2>
+        <p class="section-subtitle">Promote the most important products at the top of the site.</p>
+    </div>
     <div class="featured-scroll" id="featuredScroll">
         {% for product in featured %}
         <a href="{% url 'product_detail' product.pk %}" class="featured-card">
             {% if product.image %}
             <img src="{{ product.image.url }}" alt="{{ product.name }}" class="featured-img" loading="lazy">
             {% else %}
-            <div class="featured-img placeholder-img">🛍️</div>
+            <div class="featured-img placeholder-img">Product</div>
             {% endif %}
             <div class="featured-overlay">
                 {% if product.discount_percent > 0 %}
                 <span class="discount-badge">{{ product.discount_percent }}% OFF</span>
                 {% endif %}
                 <h3>{{ product.name|truncatewords:5 }}</h3>
-                <span class="featured-price">₹{{ product.price|intcomma }}</span>
+                <span class="featured-price">Rs. {{ product.price|intcomma }}</span>
             </div>
         </a>
         {% endfor %}
@@ -77,139 +114,120 @@
 </section>
 {% endif %}
 
-<!-- Category Pills -->
 {% if categories %}
 <section class="category-section">
     <div class="category-scroll">
         <a href="{% url 'home' %}" class="category-pill {% if not active_category %}active{% endif %}">
-            🏷️ All
+            All
         </a>
         {% for cat in categories %}
-        <a href="{% url 'category' cat.slug %}" 
-           class="category-pill {% if active_category == cat.slug %}active{% endif %}">
-            {{ cat.icon|default:"📦" }} {{ cat.name }}
+        <a href="{% url 'category' cat.slug %}" class="category-pill {% if active_category == cat.slug %}active{% endif %}">
+            {{ cat.icon|default:"" }} {{ cat.name }}
         </a>
         {% endfor %}
     </div>
 </section>
 {% endif %}
 
-<!-- Store Filter Pills -->
 <section class="store-filter-section">
     <div class="store-scroll">
-        <a href="{% url 'home' %}{% if active_category %}?category={{ active_category }}{% elif query %}?q={{ query }}{% endif %}" 
-           class="store-pill {% if not active_store %}active{% endif %}">All Stores</a>
+        <a href="{% url 'home' %}{% if active_category %}?category={{ active_category }}{% elif query %}?q={{ query }}{% endif %}" class="store-pill {% if not active_store %}active{% endif %}">All Stores</a>
         {% for code, name in stores %}
-        <a href="?store={{ code }}{% if active_category %}&category={{ active_category }}{% endif %}{% if query %}&q={{ query }}{% endif %}" 
-           class="store-pill {% if active_store == code %}active{% endif %}">{{ name }}</a>
+        <a href="?store={{ code }}{% if active_category %}&category={{ active_category }}{% endif %}{% if query %}&q={{ query }}{% endif %}" class="store-pill {% if active_store == code %}active{% endif %}">{{ name }}</a>
         {% endfor %}
     </div>
 </section>
 
-<!-- Search Results Header -->
 {% if query %}
 <div class="search-header">
-    <h2>🔍 Results for "{{ query }}"</h2>
+    <h2>Results for "{{ query }}"</h2>
     <span class="result-count">{{ products.count }} deal{{ products.count|pluralize }} found</span>
 </div>
 {% endif %}
 
 {% if current_category %}
 <div class="search-header">
-    <h2>{{ current_category.icon|default:"📦" }} {{ current_category.name }}</h2>
+    <h2>{{ current_category.icon|default:"" }} {{ current_category.name }}</h2>
     <span class="result-count">{{ products.count }} deal{{ products.count|pluralize }}</span>
 </div>
 {% endif %}
 
-<!-- Latest Deals Section -->
 {% if not query and not current_category %}
 <div class="section-header">
-    <h2 class="section-title">✨ Latest Deals & Updated Products</h2>
-    <p class="section-subtitle">Freshly added affiliate offers from top stores.</p>
+    <h2 class="section-title">Latest products</h2>
+    <p class="section-subtitle">Every product card has a detail page and a direct Buy Now link.</p>
 </div>
 {% endif %}
 
-<!-- Product Grid -->
 <section class="products-section">
     <div class="product-grid" id="productGrid">
         {% for product in products %}
         <div class="product-card" data-product-id="{{ product.pk }}">
-            <!-- Image -->
             <a href="{% url 'product_detail' product.pk %}" class="card-image-wrapper">
                 {% if product.image %}
                 <img src="{{ product.image.url }}" alt="{{ product.name }}" class="card-image" loading="lazy">
                 {% else %}
-                <div class="card-image placeholder-img">🛍️</div>
+                <div class="card-image placeholder-img">Product</div>
                 {% endif %}
-                
-                <!-- Badges -->
+
                 <div class="card-badges">
                     {% if product.discount_percent > 0 %}
                     <span class="badge-discount">{{ product.discount_percent }}% OFF</span>
                     {% endif %}
                     {% if product.is_expiring_soon %}
-                    <span class="badge-expiring">⏰ {{ product.days_remaining }}d left</span>
+                    <span class="badge-expiring">{{ product.days_remaining }}d left</span>
                     {% endif %}
                 </div>
-                
-                <!-- Store Badge -->
+
                 <span class="badge-store" style="background: {{ product.store_color }}">
                     {{ product.store_display }}
                 </span>
             </a>
-            
-            <!-- Info -->
+
             <div class="card-info">
                 <a href="{% url 'product_detail' product.pk %}" class="card-title">
                     {{ product.name|truncatewords:8 }}
                 </a>
-                
-                <!-- Rating -->
+
                 {% if product.rating > 0 %}
                 <div class="card-rating">
-                    <span class="stars">{% for i in "12345" %}{% if forloop.counter <= product.rating %}⭐{% else %}☆{% endif %}{% endfor %}</span>
+                    <span class="stars">{% for i in "12345" %}{% if forloop.counter <= product.rating %}*{% else %}-{% endif %}{% endfor %}</span>
                     <span class="rating-num">{{ product.rating }}</span>
                 </div>
                 {% endif %}
-                
-                <!-- Price -->
+
                 <div class="card-price-row">
-                    <span class="card-price">₹{{ product.price|intcomma }}</span>
+                    <span class="card-price">Rs. {{ product.price|intcomma }}</span>
                     {% if product.original_price %}
-                    <span class="card-original-price">₹{{ product.original_price|intcomma }}</span>
+                    <span class="card-original-price">Rs. {{ product.original_price|intcomma }}</span>
                     {% endif %}
                     {% if product.discount_percent > 0 %}
                     <span class="card-discount-text">{{ product.discount_percent }}% off</span>
                     {% endif %}
                 </div>
-                
-                <!-- Actions -->
+
                 <div class="card-actions">
-                    <a href="{% url 'track_click' product.pk %}" target="_blank" rel="noopener noreferrer" class="btn-buy">
-                        Buy Now >>
+                    <a href="{% if product.product_link %}{{ product.product_link }}{% else %}{% url 'product_detail' product.pk %}{% endif %}" target="_blank" rel="noopener noreferrer" class="btn-buy">
+                        Buy Now
                     </a>
-                    
+
                     {% if user.is_authenticated %}
-                    <button class="btn-wishlist-toggle" 
-                            data-product-id="{{ product.pk }}"
-                            data-url="{% url 'toggle_wishlist' product.pk %}"
-                            title="Add to Wishlist">
-                        🤍
+                    <button class="btn-wishlist-toggle" data-product-id="{{ product.pk }}" data-url="{% url 'toggle_wishlist' product.pk %}" title="Add to Wishlist">
+                        Save
                     </button>
                     {% endif %}
-                    
-                    <a href="https://pinterest.com/pin/create/button/?url={{ request.build_absolute_uri|urlencode }}&media={% if product.image %}{{ product.image.url }}{% endif %}&description={{ product.name|urlencode }}%20-%20₹{{ product.price }}%20{{ product.discount_percent }}%25%20OFF" 
-                       target="_blank" rel="noopener" class="btn-pin" title="Pin to Pinterest">
-                        📌
+
+                    <a href="https://pinterest.com/pin/create/button/?url={{ request.build_absolute_uri|urlencode }}&media={% if product.image %}{{ product.image.url }}{% endif %}&description={{ product.name|urlencode }}%20-%20Rs.%20{{ product.price }}%20{{ product.discount_percent }}%25%20OFF" target="_blank" rel="noopener" class="btn-pin" title="Pin to Pinterest">
+                        Pin
                     </a>
                 </div>
             </div>
         </div>
         {% empty %}
         <div class="empty-state">
-            <span class="empty-icon">🔍</span>
+            <span class="empty-icon">No products</span>
             <h3>No deals found</h3>
-            <p>Try a different search or category.</p>
+            <p>Add products from Django admin or try a different search/category.</p>
             <a href="{% url 'home' %}" class="btn-primary">Browse All Deals</a>
         </div>
         {% endfor %}

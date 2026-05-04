@@ -36,8 +36,8 @@
                        target="_blank" rel="noopener" class="btn-pin-large">
                         📌 Pin to Pinterest
                     </a>
-                    <a href="{% url 'track_click' product.pk %}" target="_blank" rel="noopener" class="btn-buy-sm">
-                        🛒 Buy
+                    <a href="{% if product.product_link %}{{ product.product_link }}{% else %}{% url 'product_detail' product.pk %}{% endif %}" target="_blank" rel="noopener" class="btn-buy-sm">
+                        Buy
                     </a>
                 </div>
             </div>

@@ -1,76 +1,63 @@
 {% load static %}
-{% load humanize %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Super Store - Best Deals & Offers{% endblock %}</title>
-    <meta name="description" content="{% block meta_description %}Discover the best deals, discounts, and offers from Amazon, Flipkart, Meesho and more. Shop smart, save big!{% endblock %}">
-    
-    <!-- Open Graph / Pinterest Rich Pins -->
+    <title>{% block title %}Super Store - Best Product Deals{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}Discover product deals from Amazon, Flipkart, Meesho and more. Every product includes a direct buying link.{% endblock %}">
+
     {% block og_tags %}
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Super Store - Best Deals & Offers">
-    <meta property="og:description" content="Discover the best deals and offers from top stores.">
+    <meta property="og:title" content="Super Store - Best Product Deals">
+    <meta property="og:description" content="Discover product deals from top stores with direct buying links.">
     <meta property="og:site_name" content="Super Store">
     {% endblock %}
-    
-    <!-- Fonts -->
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- CSS -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    
-    <!-- Pinterest SDK -->
     <script async defer src="//assets.pinterest.com/js/pinit.js"></script>
 </head>
 <body>
-    <!-- Top Announcement Bar -->
     <div class="announcement-bar">
-        <p>🔥 Affiliate Deals — We may earn a commission when you buy through our links. <a href="#disclosure">Learn more</a></p>
+        <p>Fresh product deals from top stores. Click Buy Now to open the provided store link.</p>
     </div>
 
-    <!-- Navigation -->
     <nav class="navbar" id="navbar">
         <div class="nav-inner">
             <a href="{% url 'home' %}" class="nav-brand">
-                <span class="brand-icon">🛍️</span>
+                <span class="brand-icon">S</span>
                 <span class="brand-text">Super Store</span>
             </a>
-            
-            <!-- Search Bar (Desktop) -->
+
             <div class="nav-search" id="navSearch">
                 <form action="{% url 'search' %}" method="get" class="search-form">
-                    <input type="text" name="q" placeholder="Search deals..." 
-                           value="{{ query|default:'' }}" 
-                           class="search-input" id="searchInput"
-                           autocomplete="off">
-                    <button type="submit" class="search-btn">🔍</button>
+                    <input type="text" name="q" placeholder="Search products..." value="{{ query|default:'' }}" class="search-input" id="searchInput" autocomplete="off">
+                    <button type="submit" class="search-btn" aria-label="Search">Search</button>
                 </form>
                 <div class="search-results-dropdown" id="searchDropdown"></div>
             </div>
-            
+
             <div class="nav-actions">
                 {% if user.is_authenticated %}
                     <a href="{% url 'wishlist' %}" class="nav-icon-btn" title="Wishlist">
-                        <span class="icon">❤️</span>
+                        <span class="icon">Wishlist</span>
                         {% if user.wishlist.items.count > 0 %}
                         <span class="nav-badge">{{ user.wishlist.items.count }}</span>
                         {% endif %}
                     </a>
                     <div class="user-menu">
-                        <button class="user-avatar" id="userMenuBtn">
+                        <button class="user-avatar" id="userMenuBtn" aria-label="Open user menu">
                             {{ user.username|first|upper }}
                         </button>
                         <div class="user-dropdown" id="userDropdown">
-                            <span class="dropdown-name">Hi, {{ user.username }} 👋</span>
-                            <a href="{% url 'wishlist' %}">❤️ My Wishlist</a>
+                            <span class="dropdown-name">Hi, {{ user.username }}</span>
+                            <a href="{% url 'wishlist' %}">My Wishlist</a>
                             <form action="{% url 'logout' %}" method="post">
                                 {% csrf_token %}
-                                <button type="submit" class="dropdown-logout">🚪 Logout</button>
+                                <button type="submit" class="dropdown-logout">Logout</button>
                             </form>
                         </div>
                     </div>
@@ -78,87 +65,75 @@
                     <a href="{% url 'login' %}" class="nav-link">Login</a>
                     <a href="{% url 'register' %}" class="btn-cta-sm">Sign Up</a>
                 {% endif %}
-                <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
+                <button class="theme-toggle" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">Mode</button>
             </div>
-            
-            <!-- Mobile Menu Toggle -->
-            <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">Menu</button>
         </div>
     </nav>
 
-    <!-- Messages -->
     {% if messages %}
     <div class="toast-container" id="toastContainer">
         {% for message in messages %}
         <div class="toast toast-{{ message.tags }}" data-auto-dismiss="5000">
-            <span class="toast-icon">
-                {% if message.tags == 'success' %}✅{% elif message.tags == 'error' %}❌{% elif message.tags == 'warning' %}⚠️{% else %}ℹ️{% endif %}
-            </span>
             <span class="toast-text">{{ message }}</span>
-            <button class="toast-close" onclick="this.parentElement.remove()">✕</button>
+            <button class="toast-close" onclick="this.parentElement.remove()" aria-label="Close message">Close</button>
         </div>
         {% endfor %}
     </div>
     {% endif %}
 
-    <!-- Main Content -->
     <main class="main-content">
         {% block content %}
         {% endblock %}
     </main>
 
-    <!-- Footer -->
     <footer class="site-footer">
         <div class="footer-inner">
             <div class="footer-brand">
-                <span class="brand-icon">🛍️</span> Super Store
-                <p class="footer-tagline">Your trusted source for the best online deals.</p>
+                <span class="brand-icon">S</span> Super Store
+                <p class="footer-tagline">Your trusted source for product deals and buying links.</p>
             </div>
             <div class="footer-links">
                 <a href="{% url 'home' %}">Home</a>
-                <a href="{% url 'pinterest_feed' %}">📌 Pinterest Feed</a>
-                <a href="#disclosure">Disclosure</a>
+                <a href="{% url 'pinterest_feed' %}">Pinterest Feed</a>
             </div>
             <div class="footer-social">
-                <a href="https://pinterest.com" target="_blank" rel="noopener" title="Pinterest">📌</a>
-                <a href="https://twitter.com" target="_blank" rel="noopener" title="Twitter">🐦</a>
-                <a href="https://wa.me/" target="_blank" rel="noopener" title="WhatsApp">💬</a>
+                <a href="https://pinterest.com" target="_blank" rel="noopener" title="Pinterest">Pinterest</a>
+                <a href="https://twitter.com" target="_blank" rel="noopener" title="Twitter">Twitter</a>
+                <a href="https://wa.me/" target="_blank" rel="noopener" title="WhatsApp">WhatsApp</a>
             </div>
-        </div>
-        <div class="footer-disclosure" id="disclosure">
-            <p><strong>Affiliate Disclosure:</strong> Super Store is a participant in various affiliate programs. We earn commissions from qualifying purchases made through links on this site. This does not affect our product recommendations or the prices you pay.</p>
         </div>
         <div class="footer-copy">
             <p>&copy; 2026 Super Store. All rights reserved.</p>
         </div>
     </footer>
 
-    <!-- Mobile Bottom Navigation -->
     <nav class="mobile-bottom-nav" id="mobileBottomNav">
         <a href="{% url 'home' %}" class="bottom-nav-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
-            <span class="bottom-nav-icon">🏠</span>
+            <span class="bottom-nav-icon">Home</span>
             <span class="bottom-nav-label">Home</span>
         </a>
         <a href="{% url 'search' %}" class="bottom-nav-item">
-            <span class="bottom-nav-icon">🔍</span>
+            <span class="bottom-nav-icon">Search</span>
             <span class="bottom-nav-label">Search</span>
         </a>
         <a href="{% url 'pinterest_feed' %}" class="bottom-nav-item">
-            <span class="bottom-nav-icon">📌</span>
+            <span class="bottom-nav-icon">Pins</span>
             <span class="bottom-nav-label">Pins</span>
         </a>
         <a href="{% url 'wishlist' %}" class="bottom-nav-item">
-            <span class="bottom-nav-icon">❤️</span>
+            <span class="bottom-nav-icon">Saved</span>
             <span class="bottom-nav-label">Wishlist</span>
         </a>
         {% if user.is_authenticated %}
         <button class="bottom-nav-item" onclick="document.getElementById('userDropdown').classList.toggle('show')">
-            <span class="bottom-nav-icon">👤</span>
+            <span class="bottom-nav-icon">Profile</span>
             <span class="bottom-nav-label">Profile</span>
         </button>
         {% else %}
         <a href="{% url 'login' %}" class="bottom-nav-item">
-            <span class="bottom-nav-icon">👤</span>
+            <span class="bottom-nav-icon">Login</span>
             <span class="bottom-nav-label">Login</span>
         </a>
         {% endif %}
