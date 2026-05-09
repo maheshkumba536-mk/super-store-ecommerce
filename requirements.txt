@@ -1,5 +1,7 @@
-Django
+Django>=4.0
 Pillow
 dj-database-url
-psycopg[binary]
+psycopg2-binary
 python-dotenv
+gunicorn
+whitenoise

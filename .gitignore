@@ -24,3 +24,6 @@ env/
 
 # Scripts
 run_updates.py
+
+.vercel
+.env*.local
