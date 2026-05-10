@@ -91,10 +91,12 @@ WSGI_APPLICATION = 'ecommerce_project.wsgi.application'
 DATABASE_URL = os.environ.get('DATABASE_URL') or os.environ.get('POSTGRES_URL')
 
 DATABASES = {
-    'default': dj_database_url.parse(
-        DATABASE_URL or f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+    "default": dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=600,
+        ssl_require=False,
     )
+}
 }
 
 # Password validation
